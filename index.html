@@ -12,72 +12,41 @@
       padding: 30px;
       color: #333;
     }
-    h1 {
-      font-size: 28px;
-      margin-bottom: 20px;
-    }
+    h1 { font-size: 28px; margin-bottom: 20px; }
     label, select, input[type="date"], input[type="text"] {
-      font-size: 16px;
-      margin-right: 10px;
+      font-size: 16px; margin-right: 10px;
     }
-    input[type="file"] {
-      font-size: 14px;
-    }
+    input[type="file"] { font-size: 14px; }
     button {
-      background-color: #007bff;
-      border: none;
-      color: white;
-      padding: 8px 14px;
-      margin: 6px 4px;
-      font-size: 14px;
-      cursor: pointer;
-      border-radius: 4px;
+      background-color: #007bff; border: none; color: white;
+      padding: 8px 14px; margin: 6px 4px; font-size: 14px;
+      cursor: pointer; border-radius: 4px;
     }
-    button:hover {
-      background-color: #0056b3;
-    }
+    button:hover { background-color: #0056b3; }
     .section {
-      margin-top: 40px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      margin-top: 40px; background: #fff; padding: 20px;
+      border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+      width: 100%; border-collapse: collapse; margin-top: 10px;
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
+      border: 1px solid #ddd; padding: 8px;
     }
-    th {
-      background-color: #f0f4f8;
-    }
-    .red {
-      background-color: #ffdddd;
-      font-weight: bold;
-    }
-    .orange {
-      background-color: #fff0cc;
-      font-weight: bold;
-    }
-    canvas {
-      margin-top: 40px;
-    }
+    th { background-color: #f0f4f8; }
+    .red { background-color: #ffdddd; font-weight: bold; }
+    .orange { background-color: #fff0cc; font-weight: bold; }
+    canvas { margin-top: 40px; }
   </style>
 </head>
 <body>
   <h1>포곡고등학교 교복 미착용 학생 관리(ver.2025 학생자치안전부)</h1>
 
-  <label>날짜 선택: <input type="date" id="dateInput"></label>
-  <br><br>
+  <label>날짜 선택: <input type="date" id="dateInput"></label><br><br>
 
   <label>학생 목록 Excel 업로드: <input type="file" id="fileInput" accept=".xlsx"></label>
   <button onclick="exportToExcel()">엑셀로 저장</button>
-  <button onclick="sendToServer()">서버로 전송</button>
-  <br><br>
+  <button onclick="sendToServer()">서버로 전송</button><br><br>
 
   <label>학년/반 필터:
     <select id="filterSelect" onchange="renderByClass()">
@@ -90,7 +59,6 @@
   </label>
 
   <div id="classSections"></div>
-
   <canvas id="monthlyChart" width="600" height="300"></canvas>
 
   <script>
@@ -98,7 +66,6 @@
     let grouped = {};
 
     document.getElementById("fileInput").addEventListener("change", function(e) {
-      if (!confirm("업로드 시 기존 데이터가 초기화됩니다. 계속할까요?")) return;
       const file = e.target.files[0];
       const reader = new FileReader();
 
@@ -108,7 +75,7 @@
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-        students = jsonData.map(row => ({
+        const newStudents = jsonData.map(row => ({
           grade: row['학년'],
           class: row['반'],
           number: row['번호'],
@@ -117,6 +84,18 @@
           dates: []
         }));
 
+        let addedCount = 0;
+        newStudents.forEach(ns => {
+          const exists = students.find(s =>
+            s.grade == ns.grade && s.class == ns.class && s.number == ns.number
+          );
+          if (!exists) {
+            students.push(ns);
+            addedCount++;
+          }
+        });
+
+        alert(`새로 추가된 학생 수: ${addedCount}명`);
         saveAndRender();
       };
 
@@ -153,7 +132,7 @@
       Object.entries(grouped).forEach(([key, classStudents]) => {
         if (filter && filter !== key) return;
 
-        const filteredStudents = classStudents.filter(student => 
+        const filteredStudents = classStudents.filter(student =>
           student.name.includes(searchKeyword)
         );
         if (filteredStudents.length === 0) return;
@@ -239,18 +218,19 @@
 
     function sendToServer() {
       const url = "https://script.google.com/macros/s/AKfycbzOki2u8Ai9GaemfG-UULNNxPD4UGE3zBwvv45fcjfR712EixuwdBHOZrqRfOQhKFa7/exec";
-      const exportData = students.map(s => ({
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(students.map(s => ({
         학년: s.grade,
         반: s.class,
         번호: s.number,
         이름: s.name,
         누적횟수: s.count,
         미착용날짜: s.dates.join(", ")
-      }));
+      }))));
+
       fetch(url, {
         method: "POST",
-        body: JSON.stringify(exportData),
-        headers: { "Content-Type": "application/json" }
+        body: formData
       })
       .then(res => res.text())
       .then(result => alert("전송 완료: " + result))

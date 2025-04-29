@@ -45,7 +45,10 @@
   <label>날짜 선택: <input type="date" id="dateInput"></label><br><br>
 
   <label>학생 목록 Excel 업로드: <input type="file" id="fileInput" accept=".xlsx"></label>
-  <button onclick="exportToExcel()">엑셀로 저장</button><br><br>
+  <button onclick="exportToExcel()">엑셀로 저장</button>
+  <button onclick="saveToServer()">서버로 저장</button>
+  <button onclick="loadFromServer()">서버에서 불러오기</button>
+  <br><br>
 
   <label>학년/반 필터:
     <select id="filterSelect" onchange="renderByClass()">
@@ -67,6 +70,8 @@
   <canvas id="monthlyChart" width="600" height="300"></canvas>
 
   <script>
+    const SERVER_URL = "https://script.google.com/macros/s/"https://script.google.com/macros/s/AKfycbxanXk9Ty1Ao7YwvVkRTiNjs9eI3UsH8XVtDPkbwOMohL6DD8SjFi5efMKDvGndEN8/exec"; // 
+
     let students = JSON.parse(localStorage.getItem("students")) || [];
     let grouped = {};
     let showOnlyHigh = false;
@@ -242,6 +247,35 @@
       XLSX.writeFile(workbook, `교복미착용현황_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
+    function saveToServer() {
+      fetch(SERVER_URL, {
+        method: "POST",
+        body: JSON.stringify(students),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(msg => alert("✅ 서버 저장 완료"))
+      .catch(err => alert("❌ 저장 실패: " + err));
+    }
+
+    function loadFromServer() {
+      fetch(SERVER_URL)
+        .then(res => res.json())
+        .then(data => {
+          students = data.map(s => ({
+            grade: s["학년"],
+            class: s["반"],
+            number: s["번호"],
+            name: s["이름"],
+            count: parseInt(s["누적횟수"] || 0),
+            dates: (s["미착용날짜"] || "").split(",").map(d => d.trim()).filter(d => d)
+          }));
+          saveAndRender();
+          alert("📥 서버 데이터 불러오기 완료");
+        })
+        .catch(err => alert("❌ 서버 불러오기 실패: " + err));
+    }
+
     function getRandomColor() {
       const r = Math.floor(Math.random() * 156) + 100;
       const g = Math.floor(Math.random() * 156) + 100;
@@ -292,10 +326,10 @@
       document.getElementById("dateInput").value = today;
       updateMinCountLabel();
       updateFilter();
-      renderByClass();
-      updateChart();
+      loadFromServer(); // 서버에서 불러오기 자동 실행
     };
   </script>
 </body>
 </html>
+
 

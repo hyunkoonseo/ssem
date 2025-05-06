@@ -70,7 +70,7 @@
   <canvas id="monthlyChart" width="600" height="300"></canvas>
 
   <script>
-    const SERVER_URL = "https://script.google.com/macros/s/AKfycbwfJtTjb-RzB29yv0jSxZOWs6QPxCUbc_B6G7eEghYhpErrpxOBJxt8-OeOzQC-uJ3C/exec"; // 
+    const SERVER_URL = "https://script.google.com/macros/s/AKfycbwRTy1rXXeenHb-Sv3FZanwfZP3eauUXGFqNJEMquFTRIImIHxOGq5a1xPNnwBIW8qO/exec"; // 
 
     let students = JSON.parse(localStorage.getItem("students")) || [];
     let grouped = {};
@@ -253,33 +253,36 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: students })
   })
-    .then(res => res.text())
-    .then(msg => {
-      console.log("서버 응답:", msg);
-      alert(msg);
-    })
-    .catch(err => {
-      console.error("❌ 저장 실패:", err);
-      alert("❌ 저장 실패: " + err.message);
-    });
+  .then(res => res.text())
+  .then(msg => {
+    console.log("서버 응답:", msg);
+    alert(msg);
+  })
+  .catch(err => {
+    console.error("❌ 저장 실패:", err);
+    alert("❌ 저장 실패: " + err.message);
+  });
 }
 
     function loadFromServer() {
       fetch(SERVER_URL)
-        .then(res => res.json())
-        .then(data => {
-          students = data.map(s => ({
-            grade: s["학년"],
-            class: s["반"],
-            number: s["번호"],
-            name: s["이름"],
-            count: parseInt(s["누적횟수"] || 0),
-            dates: (s["미착용날짜"] || "").split(",").map(d => d.trim()).filter(d => d)
-          }));
-          saveAndRender();
-          alert("📥 서버 데이터 불러오기 완료");
-        })
-        .catch(err => alert("❌ 서버 불러오기 실패: " + err));
+    .then(res => res.json())
+    .then(data => {
+      students = data.map(s => ({
+        grade: s["학년"],
+        class: s["반"],
+        number: s["번호"],
+        name: s["이름"],
+        count: parseInt(s["누적횟수"] || 0),
+        dates: (s["미착용날짜"] || "").split(",").map(d => d.trim()).filter(d => d)
+      }));
+      saveAndRender();
+      alert("📥 서버 데이터 불러오기 완료");
+    })
+    .catch(err => {
+      console.error("❌ 서버 불러오기 실패:", err);
+      alert("❌ 서버 불러오기 실패: " + err.message);
+    });
     }
 
     function getRandomColor() {

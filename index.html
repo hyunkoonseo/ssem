@@ -70,7 +70,7 @@
   <canvas id="monthlyChart" width="600" height="300"></canvas>
 
   <script>
-    const SERVER_URL = "https://script.google.com/macros/s/AKfycbyURcIopP3V3NeY5ipbFdtr1YTcjxrc7kwSlujvyDlLlkbOCh2uuENqvHvrSLyRNyoS/exec"; // 
+    const SERVER_URL = "https://script.google.com/macros/s/AKfycbxJnXGzWExNs4sjLS6sKeWd4zG9Q3UZXjFQpdV4h-TYgmUOXz04URv72h7etJrPp2qD/exec"; // 
 
     let students = JSON.parse(localStorage.getItem("students")) || [];
     let grouped = {};
@@ -248,19 +248,20 @@
     }
 
     function saveToServer() {
-  const dataString = encodeURIComponent(JSON.stringify(students));
-  const url = `${"https://script.google.com/macros/s/AKfycbyURcIopP3V3NeY5ipbFdtr1YTcjxrc7kwSlujvyDlLlkbOCh2uuENqvHvrSLyRNyoS/exec"}?data=${dataString}`;
-
-  fetch(url)
+  fetch(SERVER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: students })
+  })
     .then(res => res.text())
     .then(msg => {
       console.log("서버 응답:", msg);
-      alert(msg); // ✅ 저장 성공 or 오류 메시지
+      alert(msg);
     })
     .catch(err => {
-  console.error("❌ 저장 실패:", err);
-  alert("❌ 저장 실패: 서버와의 통신에 문제가 발생했습니다.\n" + err.message);
-});
+      console.error("❌ 저장 실패:", err);
+      alert("❌ 저장 실패: " + err.message);
+    });
 }
 
     function loadFromServer() {

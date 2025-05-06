@@ -70,7 +70,7 @@
   <canvas id="monthlyChart" width="600" height="300"></canvas>
 
   <script>
-    const SERVER_URL = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxanXk9Ty1Ao7YwvVkRTiNjs9eI3UsH8XVtDPkbwOMohL6DD8SjFi5efMKDvGndEN8/exec"; // 
+    const SERVER_URL = "https://script.google.com/macros/s/AKfycbyURcIopP3V3NeY5ipbFdtr1YTcjxrc7kwSlujvyDlLlkbOCh2uuENqvHvrSLyRNyoS/exec"; // 
 
     let students = JSON.parse(localStorage.getItem("students")) || [];
     let grouped = {};
@@ -96,7 +96,7 @@
         let addedCount = 0;
         newStudents.forEach(ns => {
           const exists = students.find(s =>
-            s.grade == ns.grade && s.class == ns.class && s.number == ns.number
+            s.grade == ns.grade && s.class == ns.class && s.number == ns.number && s.name == ns.name
           );
           if (!exists) {
             students.push(ns);
@@ -248,15 +248,20 @@
     }
 
     function saveToServer() {
-      fetch(SERVER_URL, {
-        method: "POST",
-        body: JSON.stringify(students),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(res => res.text())
-      .then(msg => alert("✅ 서버 저장 완료"))
-      .catch(err => alert("❌ 저장 실패: " + err));
-    }
+  const dataString = encodeURIComponent(JSON.stringify(students));
+  const url = `${"https://script.google.com/macros/s/AKfycbyURcIopP3V3NeY5ipbFdtr1YTcjxrc7kwSlujvyDlLlkbOCh2uuENqvHvrSLyRNyoS/exec"}?data=${dataString}`;
+
+  fetch(url)
+    .then(res => res.text())
+    .then(msg => {
+      console.log("서버 응답:", msg);
+      alert(msg); // ✅ 저장 성공 or 오류 메시지
+    })
+    .catch(err => {
+  console.error("❌ 저장 실패:", err);
+  alert("❌ 저장 실패: 서버와의 통신에 문제가 발생했습니다.\n" + err.message);
+});
+}
 
     function loadFromServer() {
       fetch(SERVER_URL)
